@@ -12,14 +12,18 @@ type client struct {
 	email   string
 }
 
-type data struct {
-	router      string
-	dns         string
-	ip          string
-	user        string
-	pass        string
-	addressPool string
-	reservedIp  []string
+type credentials struct {
+	user     string
+	password string
+}
+
+type resource struct {
+	class  string
+	ip     string
+	name   string
+	domain string
+	ports  []uint16
+	credentials
 }
 
 type jobs struct {
@@ -30,5 +34,6 @@ type jobs struct {
 }
 
 func main() {
-	fmt.Println(client{}, data{}, jobs{})
+	fmt.Println(client{}, resource{}, jobs{})
+	
 }
