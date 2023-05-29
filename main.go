@@ -107,10 +107,14 @@ func handleClient(w http.ResponseWriter, req *http.Request) {
 	case "DELETE":
 
 		id := req.URL.Query().Get("Id")
-
-		delete(clientsList, id)
-		w.WriteHeader(http.StatusOK)
-
+		for key := range clientsList {
+			if key == id {
+				delete(clientsList, id)
+				w.WriteHeader(http.StatusOK)
+				return
+			}
+		}
+		w.WriteHeader(http.StatusNotFound)
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
 		w.Header().Set("Content-Type", "application/json")
