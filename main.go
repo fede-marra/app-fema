@@ -8,14 +8,7 @@ import (
 	"time"
 )
 
-// clientsMap := map[string][]client{
-// 	"1":{Name: "Farkim", Address: "Pasaje", Phone: "123456", Email: "farkim@farkim.com"},
-// 	"2":{Name: "Rock&Fellers", Address: "Orono y Jujuy", Phone: "654321", Email: "rock@rock.com"},
-// 	"3":{Name: "Labac", Address: "Nordlink", Phone: "98765", Email: "labac@labac.com"}
-// }
-
 type client struct {
-	Id      string `json:"id"`
 	Name    string `json:"name"`
 	Address string `json:"address"`
 	Phone   string `json:"phone"`
@@ -43,17 +36,14 @@ type jobs struct {
 	clientName string
 }
 
+var clientsList = make(map[string][]client)
+
 func handleClient(w http.ResponseWriter, req *http.Request) {
-	clientsList := []client{
-		{Id: "1", Name: "Farkim", Address: "Pasaje", Phone: "123456", Email: "farkim@farkim.com"},
-		{Id: "2", Name: "Rock&Fellers", Address: "Orono y Jujuy", Phone: "654321", Email: "rock@rock.com"},
-		{Id: "3", Name: "Labac", Address: "Nordlink", Phone: "98765", Email: "labac@labac.com"},
-	}
+
 	switch req.Method {
 	case "GET":
 		id := req.URL.Query().Get("Id")
 		if id == "" {
-			// clients := []client{}
 
 			jsonResp, err := json.Marshal(clientsList)
 			if err != nil {
@@ -64,13 +54,9 @@ func handleClient(w http.ResponseWriter, req *http.Request) {
 			w.Header().Set("Content-Type", "application/json")
 			w.Write(jsonResp)
 		} else {
-			var clientFind *client
-			for _, client := range clientsList {
-				if client.Id == id {
-					clientFind = &client
-					break
-				}
-			}
+
+			clientFind := clientsList[id]
+
 			if clientFind != nil {
 				jsonResp, err := json.Marshal(clientFind)
 				if err != nil {
@@ -87,9 +73,12 @@ func handleClient(w http.ResponseWriter, req *http.Request) {
 		return
 
 	case "POST":
+		id := req.URL.Query().Get("Id")
+		//	fmt.Println(id)
+		// clientFind := clientsList[id]
 		var client client
 		err := json.NewDecoder(req.Body).Decode(&client)
-		fmt.Println(client)
+		// fmt.Println(client)
 		if err != nil {
 			log.Printf("Error happened in JSON marshal. Err: %s\n", err)
 			w.WriteHeader(http.StatusUnprocessableEntity)
@@ -104,9 +93,23 @@ func handleClient(w http.ResponseWriter, req *http.Request) {
 		if err != nil {
 			log.Printf("Error happened in JSON marshal. Err: %s\n", err)
 		}
-		clientsList = append(clientsList, client)
-		fmt.Println(clientsList)
+		for key := range clientsList {
+			if key == id {
+				delete(clientsList, id)
+				clientsList[id] = append(clientsList[id], client)
+				return
+			}
+		}
+		clientsList[fmt.Sprint(len(clientsList)+1)] = append(clientsList[fmt.Sprint(len(clientsList)+1)], client)
+		//	fmt.Println(clientsList)
 		w.Write(jsonResp)
+
+	case "DELETE":
+
+		id := req.URL.Query().Get("Id")
+
+		delete(clientsList, id)
+		w.WriteHeader(http.StatusOK)
 
 	default:
 		w.WriteHeader(http.StatusMethodNotAllowed)
@@ -117,6 +120,14 @@ func handleClient(w http.ResponseWriter, req *http.Request) {
 }
 
 func main() {
+
+	farkim := client{Name: "Farkim", Address: "Pasaje", Phone: "123456", Email: "farkim@farkim.com"}
+	rock := client{Name: "Rock&Fellers", Address: "Orono y Jujuy", Phone: "654321", Email: "rock@rock.com"}
+	labac := client{Name: "Labac", Address: "Nordlink", Phone: "98765", Email: "labac@labac.com"}
+
+	clientsList["1"] = append(clientsList["1"], farkim)
+	clientsList["2"] = append(clientsList["2"], rock)
+	clientsList["3"] = append(clientsList["3"], labac)
 
 	http.HandleFunc("/client", handleClient)
 
